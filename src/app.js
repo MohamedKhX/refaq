@@ -82,7 +82,6 @@ function createSubjectProxy(subject) {
                 handleAllowedChange(target)
             }
 
-
             return true;
         }
     });
