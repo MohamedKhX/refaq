@@ -1,3 +1,4 @@
+
 export class SubjectHandler
 {
     subject;
@@ -6,6 +7,24 @@ export class SubjectHandler
     constructor(subject, subjectElement) {
         this.subject = subject;
         this.subjectElement = subjectElement;
+
+        this.listenForSubjectChange();
+    }
+
+    listenForSubjectChange()
+    {
+        document.addEventListener('subjectChangedEvent', () => {
+
+            if (this.subject.requiredUnits <= 0) return;
+
+            if(this.subject.requiredUnits <= this.subject.getSubjectContainer().getCompletedUnits()) {
+                this.subject.setAllowed(true, false);
+                this.handleAllowedChange()
+            } else {
+                this.subject.setAllowed(false, false);
+                this.handleAllowedChange()
+            }
+        })
     }
 
     handleClick()

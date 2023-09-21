@@ -1,5 +1,6 @@
 import {SubjectElement} from "./subjectElement.js";
 import {SubjectHandler} from "./SubjectHandler.js";
+import {SubjectProxy} from "./SubjectProxy.js";
 
 export class Subject
 {
@@ -9,59 +10,70 @@ export class Subject
     units;
     status;
     allowed;
+    requiredUnits;
 
-    subjects;
+    subjectsContainer;
 
     subjectElement;
     subjectHandler;
+    subjectProxy;
 
-    constructor(code, name, root, units, status, allowed) {
+    constructor(code, name, root, units, status, allowed, requiredUnits = 0) {
         this.code = code;
         this.name = name;
         this.root = root;
         this.units = units;
         this.status = status;
         this.allowed = allowed;
+        this.requiredUnits = requiredUnits;
 
         this.subjectElement = new SubjectElement(this);
-        this.subjectHandler = new SubjectHandler(this, this.subjectElement)
+        this.subjectHandler = new SubjectHandler(this, this.subjectElement);
+        this.subjectProxy = new SubjectProxy(this, this.subjectHandler);
+
         this.subjectElement.setSubjectHandler(this.subjectHandler);
     }
 
-    render(subjectsContainer)
+    render(subjectsContainerElement)
     {
-        return this.subjectElement.render(subjectsContainer);
+        return this.subjectElement.render(subjectsContainerElement);
     }
 
-    setProxy(proxy)
+    listenForChanges()
     {
-        this.proxy = proxy;
+        this.subjectProxy.createProxy();
     }
 
-    setSubjects(subjects)
+    setSubjectsContainer(subjectsContainer)
     {
-        this.subjects = subjects;
+        this.subjectsContainer = subjectsContainer;
+        return this;
     }
 
-    setAllowed(allowed = false)
+    setAllowed(allowed = false, TriggerProxy = true)
     {
         this.allowed = allowed;
 
+        if (! TriggerProxy) return this;
+
         // Trigger the proxy to handle the change
-        if (this.proxy) {
-            this.proxy.allowed = allowed;
+        if (this.subjectProxy.proxy) {
+            this.subjectProxy.proxy.allowed = allowed;
         }
 
         return this;
     }
 
-    setStatus(status = false)
+    setStatus(status = false, TriggerProxy = true)
     {
         this.status = status;
 
+        if (! TriggerProxy) return this;
+
+
         // Trigger the proxy to handle the change
-        if (this.proxy) {
-            this.proxy.status = status;
+        if (this.subjectProxy.proxy) {
+            this.subjectProxy.proxy.status = status;
         }
 
         return this;
@@ -72,6 +84,11 @@ export class Subject
         return this.status;
     }
 
+    getRequiredUnits()
+    {
+        return this.requiredUnits;
+    }
+
     getSubjectHandler()
     {
         return this.subjectHandler;
@@ -79,18 +96,16 @@ export class Subject
 
     getNestedSubjects()
     {
-        return this.subjects.filter((item, index) => item.root === this.code);
+        return this.subjectsContainer.getSubjects().filter((item, index) => item.root === this.code);
+    }
+
+    getSubjectContainer()
+    {
+        return this.subjectsContainer;
     }
 
     hasNestedSubjects()
     {
         return !! this.getNestedSubjects();
-    }
-
-    static calcUnits(subjectsArr)
-    {
-        return subjectsArr.reduce((accumulator, currentValue) => {
-            return accumulator + currentValue.units;
-        }, 0);
     }
 }
